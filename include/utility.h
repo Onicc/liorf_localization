@@ -3,11 +3,9 @@
 #define _UTILITY_LIDAR_ODOMETRY_H_
 #define PCL_NO_PRECOMPILE 
 
-// <!-- liorf_yjz_lucky_boy -->
 #include <rclcpp/rclcpp.hpp>
 
 #include <std_msgs/msg/header.hpp>
-#include <common_lib.h>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -17,6 +15,7 @@
 #include <nav_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <common_lib.h>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -39,9 +38,9 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
- 
+
 #include <opencv2/opencv.hpp>
- 
+
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -92,6 +91,7 @@ public:
     bool useGpsElevation;
     float gpsCovThreshold;
     float poseCovThreshold;
+    float gpsFusionIntervalDistance;
 
     // Save pcd
     bool savePCD;
@@ -118,10 +118,12 @@ public:
     vector<double> extRotV;
     vector<double> extRPYV;
     vector<double> extTransV;
+    vector<double> extTransVLG;
     Eigen::Matrix3d extRot;
     Eigen::Matrix3d extRPY;
     Eigen::Vector3d extTrans;
     Eigen::Quaterniond extQRPY;
+    Eigen::Vector3d extTransLG;
 
     // voxel filter paprams
     float mappingSurfLeafSize ;
@@ -188,6 +190,8 @@ public:
         get_parameter("gpsCovThreshold", gpsCovThreshold);
         declare_parameter<float>("poseCovThreshold", 25.0f);
         get_parameter("poseCovThreshold", poseCovThreshold);
+        declare_parameter<float>("gpsFusionIntervalDistance", 5.0f);
+        get_parameter("gpsFusionIntervalDistance", gpsFusionIntervalDistance);
 
         declare_parameter<bool>("savePCD", false);
         get_parameter("savePCD", savePCD);
@@ -264,11 +268,15 @@ public:
         std::vector < double > ze(zea, std::end(zea));
         declare_parameter("extrinsicTrans", ze);
         get_parameter("extrinsicTrans", extTransV);
+        declare_parameter("extrinsicTrans_lg", ze);
+        get_parameter("extrinsicTrans_lg", extTransVLG);
 
         extRot = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extRotV.data(), 3, 3);
         extRPY = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extRPYV.data(), 3, 3);
         extTrans = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extTransV.data(), 3, 1);
         extQRPY = Eigen::Quaterniond(extRPY).inverse();
+
+        extTransLG = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extTransVLG.data(), 3, 1);
 
         declare_parameter<float>("mappingSurfLeafSize", 0.2f);
         get_parameter("mappingSurfLeafSize", mappingSurfLeafSize);
