@@ -149,6 +149,10 @@ public:
     bool system_initialized = false;
     float initialize_pose[6];
 
+    // gps stablization
+    double gpsLastTimestamp = 0.0;
+    double gpsStabilityTime = 0.0;
+
     std::unique_ptr<tf2_ros::TransformBroadcaster> br;
 
     mapOptimization(const rclcpp::NodeOptions & options) : ParamServer("liorf_localization_mapOptimization", options)
@@ -377,6 +381,46 @@ public:
     void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg)
     {
         gpsQueue.push_back(*gpsMsg);
+
+        if (useGPSInitializePose && !has_initialize_pose) {
+            if (fabs(gpsLastTimestamp) < 0.00001) {
+                gpsLastTimestamp = gpsMsg->header.stamp.sec + gpsMsg->header.stamp.nanosec / 1e-9;
+            }
+
+            if (gpsMsg->pose.covariance[0] < gpsPositionCovThreshold && gpsMsg->pose.covariance[7] < gpsPositionCovThreshold && gpsMsg->pose.covariance[35] < gpsOrientationCovThreshold) {
+                gpsStabilityTime += gpsMsg->header.stamp.sec + gpsMsg->header.stamp.nanosec / 1e-9 - gpsLastTimestamp;
+            } else {
+                gpsStabilityTime = 0;
+            }
+            
+            gpsLastTimestamp = gpsMsg->header.stamp.sec + gpsMsg->header.stamp.nanosec / 1e-9;
+
+            if (gpsStabilityTime > gpsStabilityTimeThreshold) {
+                tf2::Quaternion q(gpsMsg->pose.pose.orientation.x, gpsMsg->pose.pose.orientation.y, 
+                                    gpsMsg->pose.pose.orientation.z, gpsMsg->pose.pose.orientation.w);
+                tf2::Matrix3x3 qm(q);
+                double roll, pitch, yaw;
+
+                qm.getRPY(roll, pitch, yaw);
+                initialize_pose[0] = 0.0;
+                initialize_pose[1] = 0.0;
+                initialize_pose[2] = yaw;
+
+                // transform from GPS frame to lidar frame
+                gtsam::Pose3 gpsPose = gtsam::Pose3(
+                    gtsam::Rot3::Quaternion(gpsMsg->pose.pose.orientation.w, gpsMsg->pose.pose.orientation.x, gpsMsg->pose.pose.orientation.y, gpsMsg->pose.pose.orientation.z), 
+                    gtsam::Point3(gpsMsg->pose.pose.position.x, gpsMsg->pose.pose.position.y, gpsMsg->pose.pose.position.z));
+                gtsam::Pose3 lidarGpsPose = gpsPose.compose(gps2Lidar);
+
+                initialize_pose[3] = lidarGpsPose.translation().x();
+                initialize_pose[4] = lidarGpsPose.translation().y();
+                initialize_pose[5] = lidarGpsPose.translation().z();
+
+                has_initialize_pose = true;
+                gpsLastTimestamp = 0.0;
+                RCLCPP_INFO(get_logger(), "initialize pose from GPS");
+            }
+        }
     }
 
     void pointAssociateToMap(PointType const * const pi, PointType * const po)

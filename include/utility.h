@@ -92,6 +92,10 @@ public:
     float gpsCovThreshold;
     float poseCovThreshold;
     float gpsFusionIntervalDistance;
+    bool useGPSInitializePose;
+    float gpsPositionCovThreshold;
+    float gpsOrientationCovThreshold;
+    float gpsStabilityTimeThreshold;
 
     // Save pcd
     bool savePCD;
@@ -192,6 +196,14 @@ public:
         get_parameter("poseCovThreshold", poseCovThreshold);
         declare_parameter<float>("gpsFusionIntervalDistance", 5.0f);
         get_parameter("gpsFusionIntervalDistance", gpsFusionIntervalDistance);
+        declare_parameter<bool>("useGPSInitializePose", false);
+        get_parameter("useGPSInitializePose", useGPSInitializePose);
+        declare_parameter<float>("gpsPositionCovThreshold", 0.001f);
+        get_parameter("gpsPositionCovThreshold", gpsPositionCovThreshold);
+        declare_parameter<float>("gpsOrientationCovThreshold", 0.0001f);
+        get_parameter("gpsOrientationCovThreshold", gpsOrientationCovThreshold);
+        declare_parameter<float>("gpsStabilityTimeThreshold", 5.0f);
+        get_parameter("gpsStabilityTimeThreshold", gpsStabilityTimeThreshold);
 
         declare_parameter<bool>("savePCD", false);
         get_parameter("savePCD", savePCD);
