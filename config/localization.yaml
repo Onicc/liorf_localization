@@ -2,12 +2,12 @@
   ros__parameters:
     # Topics
     pointCloudTopic: "/velodyne_points"     # Point cloud data
-    imuTopic: "/imu"                 # IMU data # <!-- liorf_localization_yjz_lucky_boy -->
-    odomTopic: "odometry/imu"               # IMU pre-preintegration odometry, same frequency as IMU
-    gpsTopic: "odometry/gps"                # GPS odometry topic from navsat, see module_navsat.launch file
+    imuTopic: "/imu"                        # IMU data # <!-- liorf_localization_yjz_lucky_boy -->
+    odomTopic: "/odometry/imu"              # IMU pre-preintegration odometry, same frequency as IMU
+    gpsTopic: "/odometry/raw_gps"           # GPS odometry topic from navsat, see module_navsat.launch file
 
     # Frames
-    lidarFrame: "base_link"
+    lidarFrame: "velodyne_link"
     baselinkFrame: "base_link"
     odometryFrame: "map"
     mapFrame: "map"
@@ -25,7 +25,7 @@
 
     # Export settings
     savePCD: false                              # https://github.com/TixiaoShan/LIO-SAM/issues/3
-    savePCDDirectory: "/Documents/Work/MyRepo/lio_ws/data/GuiHua2ndRoad_TongHui/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
+    savePCDDirectory: "/slv/data/path/20241021080301821/GuiHua2ndRoad_TongHui/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
 
     # Sensor Settings
     sensor: velodyne                            # lidar sensor type, 'velodyne' or 'ouster' or 'livox' or 'robosense'
