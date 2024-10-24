@@ -83,6 +83,7 @@ public:
     liorf_localization::msg::CloudInfo cloudInfo;
 
     gtsam::Pose3 gps2Lidar = gtsam::Pose3(gtsam::Rot3(1, 0, 0, 0), gtsam::Point3(extTransLG.x(), extTransLG.y(), extTransLG.z()));
+    gtsam::Pose3 lidar2Gps = gtsam::Pose3(gtsam::Rot3(1, 0, 0, 0), gtsam::Point3(-extTransLG.x(), -extTransLG.y(), -extTransLG.z()));
 
     vector<pcl::PointCloud<PointType>::Ptr> surfCloudKeyFrames;
     
@@ -162,7 +163,7 @@ public:
         parameters.relinearizeSkip = 1;
         isam = new ISAM2(parameters);
 
-        subCloud = create_subscription<liorf_localization::msg::CloudInfo>("liorf_localization/deskew/cloud_info", QosPolicy(history_policy, reliability_policy),
+        subCloud = create_subscription<liorf_localization::msg::CloudInfo>("liorf_localization/deskew/cloud_info", QosPolicyDepth1(history_policy, reliability_policy),
                     std::bind(&mapOptimization::laserCloudInfoHandler, this, std::placeholders::_1));
         subGPS = create_subscription<nav_msgs::msg::Odometry>(gpsTopic, QosPolicy(history_policy, reliability_policy),
                     std::bind(&mapOptimization::gpsHandler, this, std::placeholders::_1));
@@ -313,7 +314,7 @@ public:
 
             publishOdometry();
 
-            publishFrames();
+            // publishFrames();
         }
     }
 
@@ -1532,7 +1533,7 @@ public:
         addOdomFactor();
 
         // gps factor
-        addGPSFactor();
+        // addGPSFactor();
 
         // loop factor
         addLoopFactor();
@@ -1664,7 +1665,7 @@ public:
         nav_msgs::msg::Odometry laserOdometryROS;
         laserOdometryROS.header.stamp = timeLaserInfoStamp;
         laserOdometryROS.header.frame_id = odometryFrame;
-        laserOdometryROS.child_frame_id = "base_footprint";
+        laserOdometryROS.child_frame_id = "";// lidarFrame;
         laserOdometryROS.pose.pose.position.x = transformTobeMapped[3];
         laserOdometryROS.pose.pose.position.y = transformTobeMapped[4];
         laserOdometryROS.pose.pose.position.z = transformTobeMapped[5];
@@ -1675,36 +1676,51 @@ public:
         tf2::convert(quat_tf, quat_msg);
         laserOdometryROS.pose.pose.orientation = quat_msg;
 
+        gtsam::Pose3 lidarPose = gtsam::Pose3(
+            gtsam::Rot3::Quaternion(laserOdometryROS.pose.pose.orientation.w, laserOdometryROS.pose.pose.orientation.x, laserOdometryROS.pose.pose.orientation.y, laserOdometryROS.pose.pose.orientation.z), 
+            gtsam::Point3(laserOdometryROS.pose.pose.position.x, laserOdometryROS.pose.pose.position.y, laserOdometryROS.pose.pose.position.z));
+        gtsam::Pose3 gpsPose = lidarPose.compose(lidar2Gps);
+        laserOdometryROS.pose.pose.position.x = gpsPose.translation().x();
+        laserOdometryROS.pose.pose.position.y = gpsPose.translation().y();
+        laserOdometryROS.pose.pose.position.z = gpsPose.translation().z();
+
         double default_position_x_variance = 0.0024;
         double default_position_y_variance = 0.0065;
         double default_position_z_variance = 0.0005;
         double default_orientation_z_variance = 0.0006;
 
-        if (poseCovariance(3,3) > 1.5) {
-            laserOdometryROS.pose.covariance[0] = poseCovariance(3,3);
-        } else {
-            laserOdometryROS.pose.covariance[0] = default_position_x_variance;
-        }
-
-        if (poseCovariance(4,4) > 1.5) {
-            laserOdometryROS.pose.covariance[1*6+1] = poseCovariance(4,4);
-        } else {
-            laserOdometryROS.pose.covariance[1*6+1] = default_position_y_variance;
-        }
-
-        if (poseCovariance(5,5) > 1.5) {
-            laserOdometryROS.pose.covariance[2*6+2] = poseCovariance(5,5);
-        } else {
-            laserOdometryROS.pose.covariance[2*6+2] = default_position_z_variance;
-        }
-
+        laserOdometryROS.pose.covariance[0] = default_position_x_variance;
+        laserOdometryROS.pose.covariance[1*6+1] = default_position_y_variance;
+        laserOdometryROS.pose.covariance[2*6+2] = default_position_z_variance;
         laserOdometryROS.pose.covariance[3*6+3] = 0.0;
         laserOdometryROS.pose.covariance[4*6+4] = 0.0;
-        if (poseCovariance(2,2) > 0.1) {
-            laserOdometryROS.pose.covariance[5*6+5] = poseCovariance(2,2);
-        } else {
-            laserOdometryROS.pose.covariance[5*6+5] = default_orientation_z_variance;
-        }
+        laserOdometryROS.pose.covariance[5*6+5] = default_orientation_z_variance;
+
+        // if (poseCovariance(3,3) > 1000.0) {
+        //     laserOdometryROS.pose.covariance[0] = poseCovariance(3,3);
+        // } else {
+        //     laserOdometryROS.pose.covariance[0] = default_position_x_variance;
+        // }
+
+        // if (poseCovariance(4,4) > 1000.0) {
+        //     laserOdometryROS.pose.covariance[1*6+1] = poseCovariance(4,4);
+        // } else {
+        //     laserOdometryROS.pose.covariance[1*6+1] = default_position_y_variance;
+        // }
+
+        // if (poseCovariance(5,5) > 1000.0) {
+        //     laserOdometryROS.pose.covariance[2*6+2] = poseCovariance(5,5);
+        // } else {
+        //     laserOdometryROS.pose.covariance[2*6+2] = default_position_z_variance;
+        // }
+
+        // laserOdometryROS.pose.covariance[3*6+3] = 0.0;
+        // laserOdometryROS.pose.covariance[4*6+4] = 0.0;
+        // if (poseCovariance(2,2) > 9.8) {
+        //     laserOdometryROS.pose.covariance[5*6+5] = poseCovariance(2,2);
+        // } else {
+        //     laserOdometryROS.pose.covariance[5*6+5] = default_orientation_z_variance;
+        // }
 
         // laserOdometryROS.pose.covariance[0] = poseCovariance(3,3);
         // laserOdometryROS.pose.covariance[1*6+1] = poseCovariance(4,4);
@@ -1718,10 +1734,10 @@ public:
         // quat_tf.setRPY(transformTobeMapped[0], transformTobeMapped[1], transformTobeMapped[2]);
         // tf2::Transform t_odom_to_lidar = tf2::Transform(quat_tf, tf2::Vector3(transformTobeMapped[3], transformTobeMapped[4], transformTobeMapped[5]));
         // tf2::TimePoint time_point = tf2_ros::fromRclcpp(timeLaserInfoStamp);
-        // tf2::Stamped<tf2::Transform> temp_odom_to_lidar(t_odom_to_lidar, time_point, odometryFrame);
+        // tf2::Stamped<tf2::Transform> temp_odom_to_lidar(t_odom_to_lidar, time_point, mapFrame);
         // geometry_msgs::msg::TransformStamped trans_odom_to_lidar;
         // tf2::convert(temp_odom_to_lidar, trans_odom_to_lidar);
-        // trans_odom_to_lidar.child_frame_id = "lidar_link";
+        // trans_odom_to_lidar.child_frame_id = lidarFrame;
         // br->sendTransform(trans_odom_to_lidar);
 
         // Publish odometry for ROS (incremental)
