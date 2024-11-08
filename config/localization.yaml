@@ -23,6 +23,11 @@
     gpsOrientationCovThreshold: 0.00004         # rad^2, threshold for use GPS to initialize positioning
     gpsStabilityTimeThreshold: 3.0              # seconds, GPS data stability time
 
+    # Covariance Settings
+    defaultOdomCovariance: [0.0024, 0.0065, 0.0005, 0.0, 0.0, 0.0006]  # default odometry covariance
+    laserCloudSurfDSNumThreshold: 2000            # default: 2000, when the number of points in the map is less than this value, the covariance of the point cloud will be increased
+    laserCloudSurfDSValidRateThreshold: 0.7                # default: 0.7, when the number of points in the map is less than the threshold, the covariance of the point cloud will be increased
+
     # Export settings
     savePCD: false                              # https://github.com/TixiaoShan/LIO-SAM/issues/3
     savePCDDirectory: "/slv/data/path/20241021080301821/GuiHua2ndRoad_TongHui/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation

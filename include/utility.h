@@ -97,6 +97,11 @@ public:
     float gpsOrientationCovThreshold;
     float gpsStabilityTimeThreshold;
 
+    // Covariance Settings
+    vector<double> defaultOdomCovariance;
+    int laserCloudSurfDSNumThreshold;
+    float laserCloudSurfDSValidRateThreshold;
+
     // Save pcd
     bool savePCD;
     string savePCDDirectory;
@@ -204,6 +209,15 @@ public:
         get_parameter("gpsOrientationCovThreshold", gpsOrientationCovThreshold);
         declare_parameter<float>("gpsStabilityTimeThreshold", 5.0f);
         get_parameter("gpsStabilityTimeThreshold", gpsStabilityTimeThreshold);
+
+        double da[] = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01};
+        std::vector < double > daa(da, std::end(da));
+        declare_parameter("defaultOdomCovariance", daa);
+        get_parameter("defaultOdomCovariance", defaultOdomCovariance);
+        declare_parameter<int>("laserCloudSurfDSNumThreshold", 2000);
+        get_parameter("laserCloudSurfDSNumThreshold", laserCloudSurfDSNumThreshold);
+        declare_parameter<float>("laserCloudSurfDSValidRateThreshold", 0.7f);
+        get_parameter("laserCloudSurfDSValidRateThreshold", laserCloudSurfDSValidRateThreshold);
 
         declare_parameter<bool>("savePCD", false);
         get_parameter("savePCD", savePCD);

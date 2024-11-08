@@ -129,6 +129,8 @@ public:
 
     int laserCloudSurfFromMapDSNum = 0;
     int laserCloudSurfLastDSNum = 0;
+    int laserCloudSurfValidDSNum = 0;
+    float laserCloudSurfDSValidRate = 0;
 
     bool aLoopIsClosed = false;
     map<int, int> loopIndexContainer; // from new to old
@@ -1165,6 +1167,9 @@ public:
                 coeffSel->push_back(coeffSelSurfVec[i]);
             }
         }
+
+        laserCloudSurfValidDSNum = std::count(laserCloudOriSurfFlag.begin(), laserCloudOriSurfFlag.end(), true);
+
         // reset flag for next iteration
         std::fill(laserCloudOriSurfFlag.begin(), laserCloudOriSurfFlag.end(), false);
     }
@@ -1329,7 +1334,11 @@ public:
             }
 
             transformUpdate();
+
+            laserCloudSurfDSValidRate = float(laserCloudSurfValidDSNum) / laserCloudSurfLastDSNum;
         } else {
+            laserCloudSurfValidDSNum = 0;
+            laserCloudSurfDSValidRate = 0.0;
             RCLCPP_WARN(get_logger(), "Not enough features! Only %d planar features available.", laserCloudSurfLastDSNum);
         }
     }
@@ -1684,51 +1693,24 @@ public:
         laserOdometryROS.pose.pose.position.y = gpsPose.translation().y();
         laserOdometryROS.pose.pose.position.z = gpsPose.translation().z();
 
-        double default_position_x_variance = 0.0024;
-        double default_position_y_variance = 0.0065;
-        double default_position_z_variance = 0.0005;
-        double default_orientation_z_variance = 0.0006;
-
-        laserOdometryROS.pose.covariance[0] = default_position_x_variance;
-        laserOdometryROS.pose.covariance[1*6+1] = default_position_y_variance;
-        laserOdometryROS.pose.covariance[2*6+2] = default_position_z_variance;
-        laserOdometryROS.pose.covariance[3*6+3] = 0.0;
-        laserOdometryROS.pose.covariance[4*6+4] = 0.0;
-        laserOdometryROS.pose.covariance[5*6+5] = default_orientation_z_variance;
-
-        // if (poseCovariance(3,3) > 1000.0) {
-        //     laserOdometryROS.pose.covariance[0] = poseCovariance(3,3);
-        // } else {
-        //     laserOdometryROS.pose.covariance[0] = default_position_x_variance;
-        // }
-
-        // if (poseCovariance(4,4) > 1000.0) {
-        //     laserOdometryROS.pose.covariance[1*6+1] = poseCovariance(4,4);
-        // } else {
-        //     laserOdometryROS.pose.covariance[1*6+1] = default_position_y_variance;
-        // }
-
-        // if (poseCovariance(5,5) > 1000.0) {
-        //     laserOdometryROS.pose.covariance[2*6+2] = poseCovariance(5,5);
-        // } else {
-        //     laserOdometryROS.pose.covariance[2*6+2] = default_position_z_variance;
-        // }
-
-        // laserOdometryROS.pose.covariance[3*6+3] = 0.0;
-        // laserOdometryROS.pose.covariance[4*6+4] = 0.0;
-        // if (poseCovariance(2,2) > 9.8) {
-        //     laserOdometryROS.pose.covariance[5*6+5] = poseCovariance(2,2);
-        // } else {
-        //     laserOdometryROS.pose.covariance[5*6+5] = default_orientation_z_variance;
-        // }
-
-        // laserOdometryROS.pose.covariance[0] = poseCovariance(3,3);
-        // laserOdometryROS.pose.covariance[1*6+1] = poseCovariance(4,4);
-        // laserOdometryROS.pose.covariance[2*6+2] = poseCovariance(5,5);
-        // laserOdometryROS.pose.covariance[3*6+3] = poseCovariance(0,0);
-        // laserOdometryROS.pose.covariance[4*6+4] = poseCovariance(1,1);
-        // laserOdometryROS.pose.covariance[5*6+5] = poseCovariance(2,2);
+        if(laserCloudSurfLastDSNum > laserCloudSurfDSNumThreshold && laserCloudSurfDSValidRate > laserCloudSurfDSValidRateThreshold) {
+            laserOdometryROS.pose.covariance[0*6+0] = defaultOdomCovariance[0];
+            laserOdometryROS.pose.covariance[1*6+1] = defaultOdomCovariance[1];
+            laserOdometryROS.pose.covariance[2*6+2] = defaultOdomCovariance[2];
+            laserOdometryROS.pose.covariance[3*6+3] = defaultOdomCovariance[3];
+            laserOdometryROS.pose.covariance[4*6+4] = defaultOdomCovariance[4];
+            laserOdometryROS.pose.covariance[5*6+5] = defaultOdomCovariance[5];      
+        } else {
+            laserOdometryROS.pose.covariance[0*6+0] = std::numeric_limits<double>::infinity();
+            laserOdometryROS.pose.covariance[1*6+1] = std::numeric_limits<double>::infinity();
+            laserOdometryROS.pose.covariance[2*6+2] = std::numeric_limits<double>::infinity();
+            laserOdometryROS.pose.covariance[3*6+3] = std::numeric_limits<double>::infinity();
+            laserOdometryROS.pose.covariance[4*6+4] = std::numeric_limits<double>::infinity();
+            laserOdometryROS.pose.covariance[5*6+5] = std::numeric_limits<double>::infinity();
+        }
         pubLaserOdometryGlobal->publish(laserOdometryROS);
+
+        // RCLCPP_INFO(get_logger(), "laserCloudSurfLastDSNum = %d, laserCloudSurfDSNumThreshold = %d, laserCloudSurfDSValidRate = %f, laserCloudSurfDSValidRateThreshold = %f", laserCloudSurfLastDSNum, laserCloudSurfDSNumThreshold, laserCloudSurfDSValidRate, laserCloudSurfDSValidRateThreshold);
         
         // // Publish TF
         // quat_tf.setRPY(transformTobeMapped[0], transformTobeMapped[1], transformTobeMapped[2]);

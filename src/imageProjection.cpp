@@ -121,7 +121,7 @@ public:
 
         pubExtractedCloud = create_publisher<sensor_msgs::msg::PointCloud2>( "liorf_localization/deskew/cloud_deskewed", QosPolicy(history_policy, reliability_policy));
 
-        pubLaserCloudInfo = create_publisher<liorf_localization::msg::CloudInfo>("liorf_localization/deskew/cloud_info", QosPolicy(history_policy, reliability_policy));
+        pubLaserCloudInfo = create_publisher<liorf_localization::msg::CloudInfo>("liorf_localization/deskew/cloud_info", QosPolicyDepth1(history_policy, reliability_policy));
 
         allocateMemory();
         resetParameters();
