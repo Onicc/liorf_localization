@@ -316,7 +316,7 @@ public:
 
             publishOdometry();
 
-            // publishFrames();
+            publishFrames();
         }
     }
 
@@ -1781,27 +1781,27 @@ public:
     {
         if (cloudKeyPoses3D->points.empty())
             return;
-        // publish key poses
-        publishCloud(pubKeyPoses, cloudKeyPoses3D, timeLaserInfoStamp, odometryFrame);
-        // Publish surrounding key frames
-        publishCloud(pubRecentKeyFrames, laserCloudSurfFromMapDS, timeLaserInfoStamp, odometryFrame);
-        // publish registered key frame
-        if (pubRecentKeyFrame->get_subscription_count() != 0)
-        {
-            pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
-            PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
-            *cloudOut += *transformPointCloud(laserCloudSurfLastDS,    &thisPose6D);
-            publishCloud(pubRecentKeyFrame, cloudOut, timeLaserInfoStamp, odometryFrame);
-        }
-        // publish registered high-res raw cloud
-        if (pubCloudRegisteredRaw->get_subscription_count() != 0)
-        {
-            pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
-            pcl::fromROSMsg(cloudInfo.cloud_deskewed, *cloudOut);
-            PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
-            *cloudOut = *transformPointCloud(cloudOut,  &thisPose6D);
-            publishCloud(pubCloudRegisteredRaw, cloudOut, timeLaserInfoStamp, odometryFrame);
-        }
+        // // publish key poses
+        // publishCloud(pubKeyPoses, cloudKeyPoses3D, timeLaserInfoStamp, odometryFrame);
+        // // Publish surrounding key frames
+        // publishCloud(pubRecentKeyFrames, laserCloudSurfFromMapDS, timeLaserInfoStamp, odometryFrame);
+        // // publish registered key frame
+        // if (pubRecentKeyFrame->get_subscription_count() != 0)
+        // {
+        //     pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
+        //     PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
+        //     *cloudOut += *transformPointCloud(laserCloudSurfLastDS,    &thisPose6D);
+        //     publishCloud(pubRecentKeyFrame, cloudOut, timeLaserInfoStamp, odometryFrame);
+        // }
+        // // publish registered high-res raw cloud
+        // if (pubCloudRegisteredRaw->get_subscription_count() != 0)
+        // {
+        //     pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
+        //     pcl::fromROSMsg(cloudInfo.cloud_deskewed, *cloudOut);
+        //     PointTypePose thisPose6D = trans2PointTypePose(transformTobeMapped);
+        //     *cloudOut = *transformPointCloud(cloudOut,  &thisPose6D);
+        //     publishCloud(pubCloudRegisteredRaw, cloudOut, timeLaserInfoStamp, odometryFrame);
+        // }
         // publish path
         if (pubPath->get_subscription_count() != 0)
         {
@@ -1809,25 +1809,25 @@ public:
             globalPath.header.frame_id = odometryFrame;
             pubPath->publish(globalPath);
         }
-        // publish SLAM infomation for 3rd-party usage
-        static int lastSLAMInfoPubSize = -1;
-        if (pubSLAMInfo->get_subscription_count() != 0)
-        {
-            if (lastSLAMInfoPubSize != cloudKeyPoses6D->size())
-            {
-                // liorf_localization::msg::CloudInfo slamInfo;
-                // slamInfo.header.stamp = timeLaserInfoStamp;
-                // pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
-                // *cloudOut += *laserCloudSurfLastDS;
-                // slamInfo.key_frame_cloud = publishCloud(ros::Publisher(), cloudOut, timeLaserInfoStamp, lidarFrame);
-                // slamInfo.key_frame_poses = publishCloud(ros::Publisher(), cloudKeyPoses6D, timeLaserInfoStamp, odometryFrame);
-                // pcl::PointCloud<PointType>::Ptr localMapOut(new pcl::PointCloud<PointType>());
-                // *localMapOut += *laserCloudSurfFromMapDS;
-                // slamInfo.key_frame_map = publishCloud(ros::Publisher(), localMapOut, timeLaserInfoStamp, odometryFrame);
-                // pubSLAMInfo.publish(slamInfo);
-                // lastSLAMInfoPubSize = cloudKeyPoses6D->size();
-            }
-        }
+        // // publish SLAM infomation for 3rd-party usage
+        // static int lastSLAMInfoPubSize = -1;
+        // if (pubSLAMInfo->get_subscription_count() != 0)
+        // {
+        //     if (lastSLAMInfoPubSize != cloudKeyPoses6D->size())
+        //     {
+        //         // liorf_localization::msg::CloudInfo slamInfo;
+        //         // slamInfo.header.stamp = timeLaserInfoStamp;
+        //         // pcl::PointCloud<PointType>::Ptr cloudOut(new pcl::PointCloud<PointType>());
+        //         // *cloudOut += *laserCloudSurfLastDS;
+        //         // slamInfo.key_frame_cloud = publishCloud(ros::Publisher(), cloudOut, timeLaserInfoStamp, lidarFrame);
+        //         // slamInfo.key_frame_poses = publishCloud(ros::Publisher(), cloudKeyPoses6D, timeLaserInfoStamp, odometryFrame);
+        //         // pcl::PointCloud<PointType>::Ptr localMapOut(new pcl::PointCloud<PointType>());
+        //         // *localMapOut += *laserCloudSurfFromMapDS;
+        //         // slamInfo.key_frame_map = publishCloud(ros::Publisher(), localMapOut, timeLaserInfoStamp, odometryFrame);
+        //         // pubSLAMInfo.publish(slamInfo);
+        //         // lastSLAMInfoPubSize = cloudKeyPoses6D->size();
+        //     }
+        // }
     }
 };
 
