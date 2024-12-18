@@ -1701,12 +1701,12 @@ public:
             laserOdometryROS.pose.covariance[4*6+4] = defaultOdomCovariance[4];
             laserOdometryROS.pose.covariance[5*6+5] = defaultOdomCovariance[5];      
         } else {
-            laserOdometryROS.pose.covariance[0*6+0] = std::numeric_limits<double>::infinity();
-            laserOdometryROS.pose.covariance[1*6+1] = std::numeric_limits<double>::infinity();
-            laserOdometryROS.pose.covariance[2*6+2] = std::numeric_limits<double>::infinity();
-            laserOdometryROS.pose.covariance[3*6+3] = std::numeric_limits<double>::infinity();
-            laserOdometryROS.pose.covariance[4*6+4] = std::numeric_limits<double>::infinity();
-            laserOdometryROS.pose.covariance[5*6+5] = std::numeric_limits<double>::infinity();
+            laserOdometryROS.pose.covariance[0*6+0] = 999999.0;
+            laserOdometryROS.pose.covariance[1*6+1] = 999999.0;
+            laserOdometryROS.pose.covariance[2*6+2] = 999999.0;
+            laserOdometryROS.pose.covariance[3*6+3] = 999999.0;
+            laserOdometryROS.pose.covariance[4*6+4] = 999999.0;
+            laserOdometryROS.pose.covariance[5*6+5] = 999999.0;
         }
         pubLaserOdometryGlobal->publish(laserOdometryROS);
 
