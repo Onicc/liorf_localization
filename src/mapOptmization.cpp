@@ -239,7 +239,7 @@ public:
     // add by yjz_lucky_boy
     void loadGlobalMap()
     {
-        std::string global_map = std::getenv("HOME") + savePCDDirectory;
+        std::string global_map = savePCDDirectory;
         pcl::io::loadPCDFile<PointType>(global_map + "GlobalMap.pcd", *laserCloudSurfFromMap);
         downSizeFilterLocalMapSurf.setInputCloud(laserCloudSurfFromMap);
         downSizeFilterLocalMapSurf.filter(*laserCloudSurfFromMapDS);
@@ -510,8 +510,8 @@ public:
 
       cout << "****************************************************" << endl;
       cout << "Saving map to pcd files ..." << endl;
-      if(req->destination.empty()) saveMapDirectory = std::getenv("HOME") + savePCDDirectory;
-      else saveMapDirectory = std::getenv("HOME") + req->destination;
+      if(req->destination.empty()) saveMapDirectory = savePCDDirectory;
+      else saveMapDirectory = req->destination;
       cout << "Save destination: " << saveMapDirectory << endl;
       // create directory and remove old files;
       int unused = system((std::string("exec rm -r ") + saveMapDirectory).c_str());
