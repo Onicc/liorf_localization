@@ -1,8 +1,8 @@
 /**:
   ros__parameters:
     # Topics
-    pointCloudTopic: "/livox/lidar"         # Point cloud data
-    imuTopic: "/livox/imu"                        # IMU data # <!-- liorf_localization_yjz_lucky_boy -->
+    pointCloudTopic: "/livox/lidar_top"         # Point cloud data
+    imuTopic: "/livox/imu_top"                        # IMU data # <!-- liorf_localization_yjz_lucky_boy -->
     odomTopic: "/odometry/imu"              # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "/odometry/raw_gps"           # GPS odometry topic from navsat, see module_navsat.launch file
 
@@ -73,7 +73,7 @@
     rotation_tollerance: 1000.0                     # radians
 
     # CPU Params
-    numberOfCores: 8                              # number of cores for mapping optimization
+    numberOfCores: 4                              # number of cores for mapping optimization
     mappingProcessInterval: 0.0                  # seconds, regulate mapping frequency
 
     # Surrounding map
